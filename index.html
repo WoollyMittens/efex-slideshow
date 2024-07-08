@@ -1,0 +1,145 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>DOM Indexer Example</title>
+	<meta name="viewport" content="initial-scale=1, minimum-scale=1, maximum-scale=1, width=device-width" />
+	<script src="./lib/dotlottie-player.js" type="module"></script>
+	<script src="./lib/lottie-interactivity.js"></script>
+	<style>
+		body {
+			background-color: #6EEB91;
+			font-family: sans-serif;
+		}
+		
+		* {
+			box-sizing: border-box;
+		}
+
+		#efex-slideshow {
+			margin: 0 auto;
+			aspect-ratio: 64/50;
+			width: 80%;
+			height: 80%;
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+
+			.buffer {
+				position: absolute;
+				left: 0;
+				top: 0;
+				width: 100%;
+				height: 100%;
+				transition: opacity ease-in-out 500ms;
+			}
+
+			&[data-buffer="0"] {
+				#buffer-0 {
+					opacity: 1;
+					z-index: 1;
+				}
+				#buffer-1 {
+					opacity: 0;
+					z-index: 0;
+				}
+			}
+
+			&[data-buffer="1"] {
+				#buffer-0 {
+					opacity: 0;
+					z-index: 0;
+				}
+				#buffer-1 {
+					opacity: 1;
+					z-index: 1;
+				}
+			}
+		}
+	</style>
+</head>
+
+<body>
+
+	<section id="efex-slideshow" data-media="0" data-buffer="0">
+		<div id="buffer-0" class="buffer"></div>
+		<div id="buffer-1" class="buffer"></div>
+	</section>
+
+	<script>
+		addEventListener("DOMContentLoaded", () => {
+
+			class CycleLotties {
+				constructor (cfg) {
+					this.cfg = cfg;
+					setInterval(this.cycle.bind(this), cfg.delay);
+					this.cycle();
+				}
+				get media() {
+					return +this.cfg.container.getAttribute('data-media');
+				}
+				set media(value) {
+					this.cfg.container.setAttribute('data-media', value);
+				}
+				get buffer() {
+					return +this.cfg.container.getAttribute('data-buffer');
+				}
+				set buffer (value) {
+					this.cfg.container.setAttribute('data-buffer', value);
+				}
+				cycle() {
+					// cycle the buffer
+					this.buffer = (this.buffer + 1) % this.cfg.buffers.length;
+					// cycle the media
+					this.media = (this.media + 1) % this.cfg.media.length;
+					// write the template to the right buffer
+					this.cfg.buffers[this.buffer].innerHTML = this.cfg.template
+						.replace('{id}', this.buffer)
+						.replace('{media}', this.cfg.media[this.media]);
+					// start the interactive player
+					let player = document.querySelector(`#lottie-${this.buffer}`);
+					player.addEventListener("ready", () => {
+						LottieInteractivity.create({
+							player: player.getLottie(),
+							mode: "chain",
+							actions: [
+								{
+									state: 'autoplay',
+									transition: 'onComplete',
+									frames: [0, 90],
+								},
+								{
+									state: 'loop',
+									transition: 'none',
+									frames: [91, 150],
+								},
+							]
+						});
+					});
+				}
+			}
+
+			new CycleLotties({
+				container: document.querySelector('#efex-slideshow'),
+				buffers: document.querySelectorAll('#efex-slideshow .buffer'),
+				delay: 8000,
+				media: [
+					'./media/business-resilience.json',
+					'./media/communications2.json',
+					'./media/connectivity.json',
+					'./media/cyber-security.json',
+					'./media/digital-transformation.json',
+					'./media/document-solutions.json',
+					'./media/modern-workplace.json'
+				],
+				template: `<dotlottie-player id="lottie-{id}" src="{media}" background="transparent" speed="1" style="width: 100%; height: 100%" loop autoplay></dotlottie-player>`
+			});
+
+		});
+	</script>
+
+</body>
+
+</html>
